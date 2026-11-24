@@ -1,6 +1,6 @@
 # brana
 
-Brana is toolkit for working with MCNP calculations.
+Brana is a collection of simple tools that improve the MCNP workflow. The name comes from a mountain in the Kamnik-Savinja Alps range. It is also a Slovenian word for a tool used to work on (farm) fields. 
 
 ## Installation
 
