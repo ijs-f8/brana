@@ -37,9 +37,6 @@ import os
 import datetime
 from . import __version__
 
-global SCRIPT_VERSION
-
-SCRIPT_VERSION = '0.11' # script version is written in metadata to ensure compatibility for later
 
 def _split_list(list, splitpoints):
 	"""

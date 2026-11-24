@@ -17,7 +17,7 @@ Multi-dimensional numpy array based processing of tally results:
 
 Example:
 ```python
-from brana.output import OutputFile
+from brana import OutputFile
 
 of = OutputFile('mcnp_out')
 
@@ -44,7 +44,7 @@ Limitations:
 
 Example:
 ```python
-import brana.meshtal.MeshtallyFile as mtf
+from brana import MeshtallyFile as mtf
 
 # read MCNP meshtally output file 
 mf = mtf.FromMCNP('my_meshtally')
