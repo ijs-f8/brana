@@ -1,0 +1,32 @@
+# Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Automatically generated packaging files
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment variables and secrets
+.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE configuration
+.vscode/
+.idea/
+
+# Operating system files
+Thumbs.db
+.DS_Store
