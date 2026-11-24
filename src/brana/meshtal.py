@@ -18,9 +18,6 @@ Warning:
 """
 
 #  TO DO:
-#	- Fix tally indexing in MeshtallyFile.results: now the keys are 'Tally <tally_id>' for easier
-# 		compatibility with HDF5.
-#		Ideally we would have integer keys in python objects and str keys in HDF5 !
 #	- Update help text at begining of module (begining of this file)
 #	- Time bins
 #	- Add function to find tallies by their name
