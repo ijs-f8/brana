@@ -17,15 +17,9 @@ Warning:
 	The last index of 0-th axis (energy spectra) is sum over energy bins.
 """
 
-# AUTHOR:		Mark Fortuna (mark.fortuna@ijs.si)
-# VERSION:		0.10
-# LAST EDIT:	23.11.2026 (dd.mm.yyyy)
 # SINCE PREVIOUS VERSION:
 #	- Merging for multiple files.
 #  TO DO:
-#	- Fix division by zero in opt_merge_arrays() -- see (****)
-#		See how division was done in `MeshtallyFile.Merge()` to avoid this warning:
-#		np.divide(A, B, out=out, where=where)
 #	- Fix tally indexing in MeshtallyFile.results: now the keys are 'Tally <tally_id>' for easier
 # 		compatibility with HDF5.
 #		Ideally we would have integer keys in python objects and str keys in HDF5 !
@@ -42,10 +36,9 @@ import re
 import os
 import datetime
 
-global SCRIPT_VERSION, CONTACT_EMAIL
+global SCRIPT_VERSION
 
-SCRIPT_VERSION = '0.8' # script version is written in metadata to ensure compatibility for later
-CONTACT_EMAIL = 'mark.fortuna@ijs.si'
+SCRIPT_VERSION = '0.11' # script version is written in metadata to ensure compatibility for later
 
 def _split_list(list, splitpoints):
 	"""
@@ -59,52 +52,70 @@ def _split_list(list, splitpoints):
 	sublists.append(list[last_sp:])
 	return sublists
 
-def opt_merge_arrays(A:np.ndarray, B:np.ndarray, sigmaA:np.ndarray, sigmaB:np.ndarray):
-	"""
-	Arrays `A`, `B`, `sigmaA` and `sigmaB` must have the same shape.
-	"""
+def opt_merge_arrays(A:np.ndarray, B:np.ndarray,
+                     sigmaA:np.ndarray, sigmaB:np.ndarray):
+    """
+    Optimal merging is a weighted average which consideres
+    uncertainties when asigning the weights.
 
-	u = np.square(sigmaA) + np.square(sigmaB)
-	u_nonzero = np.not_equal(u, 0)
-	opt_sigma = np.sqrt(np.divide(
-					np.multiply(np.square(sigmaA), np.square(sigmaB)),   u ,
-					where=u_nonzero))
-	opt_value = np.divide(np.multiply(A, np.square(sigmaB)) + # (****)
-					      np.multiply(B, np.square(sigmaA)),  u, # (****)
-						  where=u_nonzero) # (****)
+    Arrays `A`, `B`, `sigmaA` and `sigmaB` must have the
+    same shape.
+    
+    Returns tuple `(M, sigmaM)` where M is optimally merged
+    array and sigmaM are standard deviations.
+    """
 
-	# We need to determine where these arrays have values zero.
-	# If one of the two arrays has value zero for some voxel,
-	# we cannot optimaly merge them.
-	# We should instead take the non zero value of the two.
-	# If both arrays have a zero value at some voxel,
-	# we shoud just return (0,0) as the optimaly merged value.
+    u = np.square(sigmaA) + np.square(sigmaB)
+    u_nonzero = np.not_equal(u, 0)
 
-	# if element i is:
-	# A_i == 0 and B_i == 0 --> M_i = 0
-	# A_i != 0 and B_i == 0 --> M_i = A_i
-	# A_i == 0 and B_i != 0 --> M_i = B_i
-	# A_i != 0 and B_i != 0 --> M_i = merge(A_i, B_i)
+    _div = np.zeros(shape=u.shape)
+    np.divide(
+        np.multiply(np.square(sigmaA), np.square(sigmaB)),
+        u,
+        where=u_nonzero,
+        out=_div)
+    opt_sigma = np.sqrt(_div)
 
-	zeroA = np.equal(A, 0)
-	zeroB = np.equal(B, 0)
-	AnonzeroBzero 	= np.logical_and( np.logical_not(zeroA), zeroB)
-	BnonzeroAzero 	= np.logical_and( np.logical_not(zeroB), zeroA)
-	ABnonzero		= np.logical_and( np.logical_not(zeroA), np.logical_not(zeroB))
+    opt_value = np.zeros(shape=u.shape)
+    np.divide(
+            np.multiply(A, np.square(sigmaB)) +
+            np.multiply(B, np.square(sigmaA)),
+        u,
+        where=u_nonzero,
+        out=opt_value)
 
-	shape = A.shape
-	zeros = np.zeros(shape)	
-	
-	M = ( np.where(ABnonzero, opt_value, zeros)
-		+ np.where(AnonzeroBzero, A, zeros)
-		+ np.where(BnonzeroAzero, B, zeros)
-		+ zeros)
-	sigmaM = ( np.where(ABnonzero, opt_sigma, zeros)
-		+ np.where(AnonzeroBzero, sigmaA, zeros)
-		+ np.where(BnonzeroAzero, sigmaB, zeros)
-		+ zeros)
-	
-	return (M, sigmaM)
+    # We need to determine where these arrays have values zero.
+    # If one of the two arrays has value zero for some voxel,
+    # we cannot optimaly merge them.
+    # We should instead take the non zero value of the two.
+    # If both arrays have a zero value at some voxel,
+    # we shoud just return (0,0) as the optimaly merged value.
+
+    # if element i is:
+    # A_i == 0 and B_i == 0 --> M_i = 0
+    # A_i != 0 and B_i == 0 --> M_i = A_i
+    # A_i == 0 and B_i != 0 --> M_i = B_i
+    # A_i != 0 and B_i != 0 --> M_i = merge(A_i, B_i)
+
+    zeroA = np.equal(A, 0)
+    zeroB = np.equal(B, 0)
+    AnonzeroBzero 	= np.logical_and( np.logical_not(zeroA), zeroB)
+    BnonzeroAzero 	= np.logical_and( np.logical_not(zeroB), zeroA)
+    ABnonzero		= np.logical_and( np.logical_not(zeroA), np.logical_not(zeroB))
+
+    shape = A.shape
+    zeros = np.zeros(shape)	
+    
+    M = ( np.where(ABnonzero, opt_value, zeros)
+        + np.where(AnonzeroBzero, A, zeros)
+        + np.where(BnonzeroAzero, B, zeros)
+        + zeros)
+    sigmaM = ( np.where(ABnonzero, opt_sigma, zeros)
+        + np.where(AnonzeroBzero, sigmaA, zeros)
+        + np.where(BnonzeroAzero, sigmaB, zeros)
+        + zeros)
+    
+    return (M, sigmaM)
 
 def _recursive_print_dict(_dict:dict, indent_level:int=0, indent_str:str='| '):
 	_s = ''

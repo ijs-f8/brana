@@ -8,11 +8,6 @@ Example:
 """
 
 
-# AUTHOR:		Mark Fortuna (mark.fortuna@ijs.si)
-# VERSION:		6
-# LAST EDIT:	25.8.2026
-# SINCE PREVIOUS VERSION:
-#	- Added reading of cosine angle in `uvw_cos` in LostParticle().
 # TO DO:
 #	- when saving to numpy, save to NPZ numpy dict file
 #		* tallies will be saved as "tally_<tally_id>"=...

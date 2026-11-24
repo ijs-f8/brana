@@ -3,17 +3,6 @@ Module for parsing and editing MCNP (ASCII) input files.
 
 """
 
-# AUTHOR:		Mark Fortuna (mark.fortuna@ijs.si)
-# VERSION:		17
-# LAST EDIT:	01.10.2026
-# SINCE PREVIOUS VERSION:
-#	- Changed Surface.star attribute to Surface.boundary_type
-#	- Surfaces now accept 'reflective' (*ID) and 'white' (+ID) boundary conditions
-#	- Changed how surface transformations are parsed.
-#	- Surfaces now accept periodic surfaces: added Surface.periodic (Int)
-#	- Added transformation parsing for surfaces when using Deck.ExtractGeometry()
-#	- Added Deck.GetAvailableCellIDs() function.
-#	- Added Cell.Clone() function which copies a cell.
 # TO DO:
 #	- Deck.ExportGeometry() needs to parse also material M and MT cards, maybe even MX ?
 #	- Add parsing for periodic surfaces in Deck.ExportGeometry()
