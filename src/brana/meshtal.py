@@ -17,8 +17,6 @@ Warning:
 	The last index of 0-th axis (energy spectra) is sum over energy bins.
 """
 
-# SINCE PREVIOUS VERSION:
-#	- Merging for multiple files.
 #  TO DO:
 #	- Fix tally indexing in MeshtallyFile.results: now the keys are 'Tally <tally_id>' for easier
 # 		compatibility with HDF5.
