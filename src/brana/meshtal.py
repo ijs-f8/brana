@@ -35,6 +35,7 @@ import h5py
 import re
 import os
 import datetime
+from . import __version__
 
 global SCRIPT_VERSION
 
@@ -53,69 +54,69 @@ def _split_list(list, splitpoints):
 	return sublists
 
 def opt_merge_arrays(A:np.ndarray, B:np.ndarray,
-                     sigmaA:np.ndarray, sigmaB:np.ndarray):
-    """
-    Optimal merging is a weighted average which consideres
-    uncertainties when asigning the weights.
+					 sigmaA:np.ndarray, sigmaB:np.ndarray):
+	"""
+	Optimal merging is a weighted average which consideres
+	uncertainties when asigning the weights.
 
-    Arrays `A`, `B`, `sigmaA` and `sigmaB` must have the
-    same shape.
-    
-    Returns tuple `(M, sigmaM)` where M is optimally merged
-    array and sigmaM are standard deviations.
-    """
+	Arrays `A`, `B`, `sigmaA` and `sigmaB` must have the
+	same shape.
+	
+	Returns tuple `(M, sigmaM)` where M is optimally merged
+	array and sigmaM are standard deviations.
+	"""
 
-    u = np.square(sigmaA) + np.square(sigmaB)
-    u_nonzero = np.not_equal(u, 0)
+	u = np.square(sigmaA) + np.square(sigmaB)
+	u_nonzero = np.not_equal(u, 0)
 
-    _div = np.zeros(shape=u.shape)
-    np.divide(
-        np.multiply(np.square(sigmaA), np.square(sigmaB)),
-        u,
-        where=u_nonzero,
-        out=_div)
-    opt_sigma = np.sqrt(_div)
+	_div = np.zeros(shape=u.shape)
+	np.divide(
+		np.multiply(np.square(sigmaA), np.square(sigmaB)),
+		u,
+		where=u_nonzero,
+		out=_div)
+	opt_sigma = np.sqrt(_div)
 
-    opt_value = np.zeros(shape=u.shape)
-    np.divide(
-            np.multiply(A, np.square(sigmaB)) +
-            np.multiply(B, np.square(sigmaA)),
-        u,
-        where=u_nonzero,
-        out=opt_value)
+	opt_value = np.zeros(shape=u.shape)
+	np.divide(
+			np.multiply(A, np.square(sigmaB)) +
+			np.multiply(B, np.square(sigmaA)),
+		u,
+		where=u_nonzero,
+		out=opt_value)
 
-    # We need to determine where these arrays have values zero.
-    # If one of the two arrays has value zero for some voxel,
-    # we cannot optimaly merge them.
-    # We should instead take the non zero value of the two.
-    # If both arrays have a zero value at some voxel,
-    # we shoud just return (0,0) as the optimaly merged value.
+	# We need to determine where these arrays have values zero.
+	# If one of the two arrays has value zero for some voxel,
+	# we cannot optimaly merge them.
+	# We should instead take the non zero value of the two.
+	# If both arrays have a zero value at some voxel,
+	# we shoud just return (0,0) as the optimaly merged value.
 
-    # if element i is:
-    # A_i == 0 and B_i == 0 --> M_i = 0
-    # A_i != 0 and B_i == 0 --> M_i = A_i
-    # A_i == 0 and B_i != 0 --> M_i = B_i
-    # A_i != 0 and B_i != 0 --> M_i = merge(A_i, B_i)
+	# if element i is:
+	# A_i == 0 and B_i == 0 --> M_i = 0
+	# A_i != 0 and B_i == 0 --> M_i = A_i
+	# A_i == 0 and B_i != 0 --> M_i = B_i
+	# A_i != 0 and B_i != 0 --> M_i = merge(A_i, B_i)
 
-    zeroA = np.equal(A, 0)
-    zeroB = np.equal(B, 0)
-    AnonzeroBzero 	= np.logical_and( np.logical_not(zeroA), zeroB)
-    BnonzeroAzero 	= np.logical_and( np.logical_not(zeroB), zeroA)
-    ABnonzero		= np.logical_and( np.logical_not(zeroA), np.logical_not(zeroB))
+	zeroA = np.equal(A, 0)
+	zeroB = np.equal(B, 0)
+	AnonzeroBzero 	= np.logical_and( np.logical_not(zeroA), zeroB)
+	BnonzeroAzero 	= np.logical_and( np.logical_not(zeroB), zeroA)
+	ABnonzero		= np.logical_and( np.logical_not(zeroA), np.logical_not(zeroB))
 
-    shape = A.shape
-    zeros = np.zeros(shape)	
-    
-    M = ( np.where(ABnonzero, opt_value, zeros)
-        + np.where(AnonzeroBzero, A, zeros)
-        + np.where(BnonzeroAzero, B, zeros)
-        + zeros)
-    sigmaM = ( np.where(ABnonzero, opt_sigma, zeros)
-        + np.where(AnonzeroBzero, sigmaA, zeros)
-        + np.where(BnonzeroAzero, sigmaB, zeros)
-        + zeros)
-    
-    return (M, sigmaM)
+	shape = A.shape
+	zeros = np.zeros(shape)	
+	
+	M = ( np.where(ABnonzero, opt_value, zeros)
+		+ np.where(AnonzeroBzero, A, zeros)
+		+ np.where(BnonzeroAzero, B, zeros)
+		+ zeros)
+	sigmaM = ( np.where(ABnonzero, opt_sigma, zeros)
+		+ np.where(AnonzeroBzero, sigmaA, zeros)
+		+ np.where(BnonzeroAzero, sigmaB, zeros)
+		+ zeros)
+	
+	return (M, sigmaM)
 
 def _recursive_print_dict(_dict:dict, indent_level:int=0, indent_str:str='| '):
 	_s = ''
@@ -243,8 +244,8 @@ class MeshtallyFile:
 			'log' : [], # --> HDF5 dataset
 			# <date_time> <file_operation> <file_path>
 			#   <date_time> = datetime.datetime.now()
-			# eg.: ['2026-12-03 13:02:14.23531 read filename=/home/iter/111/a/ITER.t script_version=8',
-			#	    '2026-12-03 13:02:17.23531 export to filename=/home/iter/111/a/ITER.h5 script_version=8',
+			# eg.: ['2026-12-03 13:02:14.23531 read filename=/home/iter/111/a/ITER.t brana_version=8',
+			#	    '2026-12-03 13:02:17.23531 export to filename=/home/iter/111/a/ITER.h5 brana_version=8',
 			#	    '2026-12-03 17:02:17.23531 import from C:\my_files\ITER.h5',
 			#	    '2026-12-03 20:02:17.23531 merged from C:\my_files\ITER_A.h5 and C:\my_files\ITER_A.h5']
 			'parents' : {},		# --> HDF5 groups
@@ -265,7 +266,7 @@ class MeshtallyFile:
 		s = '`MeshtallyFile` object with attributes:\n'
 		s += _recursive_print_dict(
 			{'metadata' : self.metadata},
-		    indent_level=1, indent_str=indent_str)
+			indent_level=1, indent_str=indent_str)
 		s += f'{indent_str}results (dict): [tally_id, shape, tally_name]'
 		s += f'\n{2*indent_str}'
 		s += f'\n{2*indent_str}'.join([f'{k}\t{v['mean'].shape}\t{v['name']}' for k,v in self.results.items()])
@@ -292,7 +293,7 @@ class MeshtallyFile:
 
 		mt.is_read = True
 		_abs_path = os.path.join(os.getcwd(), filename)
-		mt.metadata['log'].append(f'{(datetime.datetime.now())} read file={_abs_path} script_version={SCRIPT_VERSION}')
+		mt.metadata['log'].append(f'{(datetime.datetime.now())} read file={_abs_path} brana_version={__version__}')
 
 		mt._split_meshtallies()
 
@@ -368,7 +369,7 @@ class MeshtallyFile:
 			savename = f'{self.metadata['name']}.h5'
 
 		_abs_path = os.path.join(os.getcwd(), savename)
-		self.metadata['log'].append(f'{(datetime.datetime.now())} export file={_abs_path} script_version={SCRIPT_VERSION}')
+		self.metadata['log'].append(f'{(datetime.datetime.now())} export file={_abs_path} brana_version={__version__}')
 
 		h5file = h5py.File(savename, 'w')
 
@@ -408,7 +409,7 @@ class MeshtallyFile:
 		meshtally_file.is_imported_from_hdf5 = True
 		_abs_path = os.path.join(os.getcwd(), filename)
 		meshtally_file.metadata['log'].append(
-			f'{(datetime.datetime.now())} import file={_abs_path} script_version={SCRIPT_VERSION}')
+			f'{(datetime.datetime.now())} import file={_abs_path} brana_version={__version__}')
 
 		return meshtally_file
 
@@ -450,7 +451,7 @@ class MeshtallyFile:
 		# _abs_path_A = os.path.join(os.getcwd(), 
 		# _abs_path_B = os.path.join(os.getcwd(), fileB._get_merge_name())
 		meshtally_file.metadata['log'].append(
-			f'{(datetime.datetime.now())} merge file_A={fileA._get_merge_name()} file_B={fileA._get_merge_name()} script_version={SCRIPT_VERSION}')
+			f'{(datetime.datetime.now())} merge file_A={fileA._get_merge_name()} file_B={fileA._get_merge_name()} brana_version={__version__}')
 		meshtally_file.metadata['parents'] = {
 			'parent A' : fileA.metadata,
 			'parent B' : fileB.metadata
@@ -517,12 +518,12 @@ class MeshtallyFile:
 	
 	def _get_merge_name(self):
 		for l in self.metadata['log']:
-			m = re.match(r'read file=(.*) script_version=', l)
+			m = re.match(r'read file=(.*) brana_version=', l)
 			if m:
 				return os.path.join(os.getcwd(), m.group(1))
 		# else -- FromMCNP name not found. MeshtallyFile object was was made as merger.
 		return self.metadata['name']
-		# print('Warning! No birth name found in self.metadata["log"]. Searched for "read file=(.*) script_version="')
+		# print('Warning! No birth name found in self.metadata["log"]. Searched for "read file=(.*) brana_version="')
 
 	def SetComment(self, comment:str):
 		"""
