@@ -4,7 +4,7 @@ Brana is a collection of simple tools that improve the MCNP workflow. The name c
 
 There exist better MCNP tool-kits than brana.
 One notable example is [F4Enix](https://github.com/Fusion4Energy/F4Enix) - it is much more versitile, has many features and is further along in development.
-However, in a few aspects this package can be advantageous:
+However, in a few aspects the brana package can be advantageous:
 * Fewer dependencies (only h5py).
 * Parsing of tallies and meshtallies as numpy arrays rather than pandas DataFrames can be easier to understand and may result in more direct mathematical operaitons (For example: direct 3D field gradient calculation). 
 * Brana suports exporting of parsed results into HDF5 format. These can be imported back to python objects.
