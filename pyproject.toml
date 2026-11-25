@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "brana"
-version = "0.1.0"
+version = "0.1.1"
 description = "Brana is toolkit for working with MCNP calculations. I enables input parsing and editing, output parsing as numpy NDarrays and manupulation of meshtally files."
 readme = "README.md"
 requires-python = ">=3.12"
