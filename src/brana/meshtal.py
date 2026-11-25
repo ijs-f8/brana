@@ -534,6 +534,32 @@ class MeshtallyFile:
 	def Plot(self, tally_id, plt_axes, origin, ):
 		raise NotImplementedError
 
+	def ErrorHistogram(self, histogram_kwargs : dict = {'bins' : 10}):
+		"""
+		Retrives distribution of errors in Meshtally results.
+		Used to evaluate the statistics of meshtally results.
+		Recomended to be used after running MeshtallyFile.Merge().
+
+		Paranmeters
+		-----------
+		`histogram_kwargs` are passed to `np.histogram()`
+
+		Returns
+		-------
+		tuple `(hist, bin_edges)` from `np.histogram()`.
+
+		Examples
+		--------
+		>>> import matplotlib.pyplot as plt
+		>>> mf = MeshtallyFile.fromMCNP('my_file')
+		>>> h, be = mf.error_histogram()
+		>>> plt.stairs(h, be)
+		"""
+		errors = np.array([])
+		for tally in self.results.values():
+			errors = np.concat((errors, tally['rel unc'].flatten()))
+		bin_edges, histogram = np.histogram(errors, **histogram_kwargs)
+		return (bin_edges, histogram)
 
 
 class MeshTally:
